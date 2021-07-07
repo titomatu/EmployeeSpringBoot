@@ -21,72 +21,60 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class EmployeeService {
-    @Autowired
-    EmployeeRepository employeeRepository;
+    private final EmployeeRepository employeeRepository;
+    private final PositionRepository positionRepository;
+    private final CandidateRepository candidateRepository;
 
-    @Autowired
-    PositionRepository positionRepository;
-
-    @Autowired
-    CandidateRepository candidateRepository;
+    public EmployeeService( EmployeeRepository employeeRepository,
+                            PositionRepository positionRepository,
+                            CandidateRepository candidateRepository){
+        this.candidateRepository = candidateRepository;
+        this.positionRepository = positionRepository;
+        this.employeeRepository = employeeRepository;
+    }
 
     public Employee createEmployee(Long positionId, Long candidateId, Employee employee){
-        Optional<Position> positionByID = positionRepository.findById(positionId);
-        if(!positionByID.isPresent()){
-            throw new PositionNotFoundException(positionId);
-        }
-        Position position = positionByID.get();  
-        employee.setPosition(position);
+        employee.setPosition(
+            this.positionRepository.findById(positionId)
+                    .orElseThrow(() -> new PositionNotFoundException(positionId))
+        );
 
-        Optional<Candidate> candidateByID = candidateRepository.findById(candidateId);
-        if(!candidateByID.isPresent()){
-            throw new CandidateNotFoundException(candidateId);
-        }
-        Candidate candidate = candidateByID.get();
-        employee.setPerson(candidate);
+        employee.setPerson(
+            this.candidateRepository.findById(candidateId)
+                    .orElseThrow(() -> new CandidateNotFoundException(candidateId))
+        );
 
-        List<Employee> employees = employeeRepository.findByCandidate(candidateId);
-        if(employees.size() > 0){
+        if(employeeRepository.findByCandidate(candidateId).size() > 0){
             throw new CandidateEmployeeExistsException(candidateId);
         }
 
-        Employee employee1 = employeeRepository.save(employee);
-
-        return employee1;
+        return employeeRepository.save(employee);
     }
 
     public Employee updateEmployee(Long positionId, Long candidateId, Long employeeId, Employee employee){
-        Optional<Position> positionByID = positionRepository.findById(positionId);
-        if(!positionByID.isPresent()){
-            throw new PositionNotFoundException(positionId);
-        }
-        Position position = positionByID.get(); 
-
-        Optional<Candidate> candidateByID = candidateRepository.findById(candidateId);
-        if(!candidateByID.isPresent()){
-            throw new CandidateNotFoundException(candidateId);
-        }
-        Candidate candidate = candidateByID.get();
-
-        Optional<Employee> employeeByID = employeeRepository.findById(employeeId);
-        if(!employeeByID.isPresent()){
-            throw new EmployeeNotFoundException(employeeId);
-        }
-        Employee employeeToUpdate = employeeByID.get();
+        Employee employeeToUpdate = this.employeeRepository.findById(employeeId)
+                                            .orElseThrow(() ->
+                                                new EmployeeNotFoundException(employeeId)
+                                            );
 
         employeeToUpdate.setSalary(employee.getSalary());
-        employeeToUpdate.setPosition(position);
-        employeeToUpdate.setPerson(candidate);
+
+        employeeToUpdate.setPosition(
+            this.positionRepository.findById(positionId)
+                    .orElseThrow(() -> new PositionNotFoundException(positionId))
+        );
+
+        employeeToUpdate.setPerson(
+            this.candidateRepository.findById(positionId)
+                    .orElseThrow(() -> new CandidateNotFoundException(candidateId))
+        );
 
         return employeeRepository.save(employeeToUpdate);
     }
 
     public Employee deleteEmployee(Long id){
-        Optional<Employee> employeeByID = employeeRepository.findById(id);
-        if(!employeeByID.isPresent()){
-            throw new EmployeeNotFoundException(id);
-        }
-        Employee employee = employeeByID.get();
+        Employee employee = this.employeeRepository.findById(id)                           
+                                    .orElseThrow(() -> new EmployeeNotFoundException(id));
 
         employeeRepository.deleteById(id);
 
@@ -94,11 +82,8 @@ public class EmployeeService {
     }
 
     public Employee getEmployee(Long id){
-        Optional<Employee> employeeByID = employeeRepository.findById(id);
-        if(!employeeByID.isPresent()){
-            throw new EmployeeNotFoundException(id);
-        }
-        Employee employee = employeeByID.get();
+        Employee employee = this.employeeRepository.findById(id)
+                                    .orElseThrow(() -> new EmployeeNotFoundException(id));
 
         return employee;
     }

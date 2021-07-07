@@ -1,7 +1,6 @@
 package com.talentmngmt.service;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -9,14 +8,12 @@ import com.talentmngmt.exception.CandidateNotFoundException;
 import com.talentmngmt.model.Candidate;
 import com.talentmngmt.repository.CandidateRepository;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
 public class CandidateService {
     private final CandidateRepository candidateRepository;
 
-    @Autowired
     public CandidateService(CandidateRepository candidateRepository){
         this.candidateRepository = candidateRepository;
     }
@@ -26,11 +23,9 @@ public class CandidateService {
     }
 
     public Candidate editCandidate(Long id, Candidate candidate){
-        Optional<Candidate> candidateById = candidateRepository.findById(id);
-        if(!candidateById.isPresent()){
-            throw new CandidateNotFoundException(id);
-        }
-        Candidate candidateUpdate = candidateById.get();
+        Candidate candidateUpdate = candidateRepository.findById(id)
+                                        .orElseThrow(() -> new CandidateNotFoundException(id));
+        
         candidateUpdate.setName(candidate.getName());
         candidateUpdate.setLastName(candidate.getLastName());
         candidateUpdate.setAddress(candidate.getAddress());
@@ -41,22 +36,16 @@ public class CandidateService {
     }
 
     public Candidate deleteCandidate(Long id){
-        Optional<Candidate> candidateById = candidateRepository.findById(id);
-        if(!candidateById.isPresent()){
-            throw new CandidateNotFoundException(id);
-        }
-        Candidate candidateDelete = candidateById.get();
+        Candidate candidateDelete = candidateRepository.findById(id)
+                                        .orElseThrow(() -> new CandidateNotFoundException(id));
         candidateRepository.delete(candidateDelete);
 
         return candidateDelete;
     }
 
     public Candidate getCandidate(Long id){
-        Optional<Candidate> candidateById = candidateRepository.findById(id);
-        if(!candidateById.isPresent()){
-            throw new CandidateNotFoundException(id);
-        }
-        Candidate candidate = candidateById.get();
+        Candidate candidate = candidateRepository.findById(id)
+                                  .orElseThrow(() -> new CandidateNotFoundException(id));
         return candidate;
     }
 
